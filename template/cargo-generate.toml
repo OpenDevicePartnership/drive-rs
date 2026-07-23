@@ -1,0 +1,32 @@
+[template]
+cargo_generate_version = ">=0.23.0"
+description = "An embedded-hal device driver built on top of the device-driver toolkit."
+
+[hooks]
+pre = ["pre-check.rhai"]
+# Runs `device-driver-cli` to compile `device.yaml` into `src/registers.rs`.
+# Because this hook shells out, generating from this template requires either an
+# interactive confirmation or the `--allow-commands` flag.
+post = ["generate.rhai"]
+
+# ---------------------------------------------------------------------------
+# Decision variables. These MUST live in the top-level [placeholders] table:
+# cargo-generate resolves them before evaluating any [conditional.'...'] block,
+# and placeholders defined inside a conditional cannot gate another conditional.
+# ---------------------------------------------------------------------------
+[placeholders]
+interfaces = { type = "array", prompt = "Which bus/interface(s) does the device use?", choices = ["gpio", "i2c", "spi"], default = ["i2c"] }
+mode = { type = "string", prompt = "Generate blocking, async, or both APIs?", choices = ["sync", "async", "both"], default = "sync" }
+
+# ---------------------------------------------------------------------------
+# Conditional file pruning.
+# device-driver is register-based, so the register transport files only make
+# sense when an I2C or SPI bus is selected. A GPIO-only driver drops them (and
+# the post-hook skips code generation, so no src/registers.rs is produced).
+# ---------------------------------------------------------------------------
+[conditional.'!interfaces.contains("i2c") && !interfaces.contains("spi")']
+ignore = ["device.yaml", "src/interface.rs", "src/driver.rs"]
+
+# The discrete-pin module only exists when GPIO is selected.
+[conditional.'!interfaces.contains("gpio")']
+ignore = ["src/gpio.rs"]
