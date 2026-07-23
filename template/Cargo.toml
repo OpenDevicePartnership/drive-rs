@@ -1,0 +1,33 @@
+{%- assign has_bus = false -%}
+{%- if interfaces contains "i2c" or interfaces contains "spi" -%}{%- assign has_bus = true -%}{%- endif -%}
+{%- assign wants_async = false -%}
+{%- if mode == "async" or mode == "both" -%}{%- assign wants_async = true -%}{%- endif -%}
+[package]
+name = "{{ project-name }}"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.90"
+description = "An embedded-hal driver for the {{ project-name | pascal_case }}."
+license = "MIT OR Apache-2.0"
+categories = ["embedded", "no-std", "hardware-support"]
+keywords = ["embedded-hal", "driver", "device-driver"]
+
+[dependencies]
+embedded-hal = "1.0"
+{% if wants_async %}embedded-hal-async = "1.0"
+{% endif %}{% if has_bus %}# The register map in `src/registers.rs` is generated ahead of time from
+# `device.yaml` by `device-driver-cli`, so only the runtime is needed here (no
+# proc-macro, no manifest parsers). Regenerate with:
+#   device-driver-cli -m device.yaml -o src/registers.rs -d {{ project-name | pascal_case }}Registers
+device-driver = { version = "1.0.9", default-features = false }
+{% endif %}defmt = { version = "0.3", optional = true }
+
+[dev-dependencies]
+# Run your driver against real hardware on your laptop over a Pico de Gallo
+# USB bridge. See `examples/pico.rs`.
+pico-de-gallo-hal = "0.6"
+{% if wants_async %}tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread"] }
+{% endif %}
+[features]
+default = []
+{% if has_bus %}defmt = ["dep:defmt", "device-driver/defmt-03"]{% else %}defmt = ["dep:defmt"]{% endif %}
