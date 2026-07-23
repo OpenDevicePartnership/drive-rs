@@ -40,6 +40,7 @@ impl device_driver::AsyncRegisterInterface for MockInterface {
 
     async fn write_register(&mut self, address: u8, _bits: u32, data: &[u8]) -> Result<(), Self::Error> {
         let start = address as usize;
+        assert!(start + data.len() <= self.regs.len(), "register write out of bounds");
         self.regs[start..start + data.len()].copy_from_slice(data);
         Ok(())
     }
