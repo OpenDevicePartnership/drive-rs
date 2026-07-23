@@ -28,6 +28,7 @@ impl device_driver::RegisterInterface for MockInterface {
 
     fn read_register(&mut self, address: u8, _bits: u32, data: &mut [u8]) -> Result<(), Self::Error> {
         let start = address as usize;
+        assert!(start + data.len() <= self.regs.len(), "register read out of bounds");
         data.copy_from_slice(&self.regs[start..start + data.len()]);
         Ok(())
     }
