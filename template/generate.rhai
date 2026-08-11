@@ -8,7 +8,7 @@
 // Requires `device-driver-cli` on PATH (`cargo install device-driver-cli`).
 let interfaces = variable::get("interfaces");
 
-if interfaces.contains("i2c") || interfaces.contains("spi") {
+if interfaces.contains("i2c") || interfaces.contains("spi") || interfaces.contains("uart") {
     let device = to_pascal_case(variable::get("project-name")) + "Registers";
     system::command(
         "device-driver-cli",

@@ -7,9 +7,12 @@
 //!
 //! Each register access is a single bus transaction so the device's internal
 //! address auto-increment is never disturbed by an intervening STOP.
-
+{% if interfaces contains "uart" %}//!
+//! A UART is the exception: it is a byte stream, so it implements the buffer
+//! traits instead.
+{% endif %}{% if interfaces contains "i2c" or interfaces contains "spi" %}
 use crate::error::Error;
-{% if interfaces contains "i2c" %}
+{% endif %}{% if interfaces contains "i2c" %}
 /// I2C transport for the register map.
 ///
 /// `address` is the device's 7-bit I2C address — do not confuse it with the
@@ -208,6 +211,70 @@ impl<SPI: embedded_hal_async::spi::SpiDevice> device_driver::AsyncRegisterInterf
             ])
             .await
             .map_err(Error::Transport)
+    }
+}
+{% endif %}{% endif %}{% if interfaces contains "uart" %}
+/// UART transport for the device's byte stream.
+///
+/// A UART carries no addressing, so this implements the `device-driver` buffer
+/// traits rather than the register ones: reads and writes forward straight to
+/// `embedded-io` and the buffer address is ignored. Whatever framing the device
+/// speaks is the driver's business, so decode it in `driver.rs`.
+pub struct UartInterface<UART> {
+    uart: UART,
+}
+
+impl<UART> UartInterface<UART> {
+    /// Create a new UART transport around a byte stream.
+    pub const fn new(uart: UART) -> Self {
+        Self { uart }
+    }
+
+    /// Release the underlying stream.
+    pub fn release(self) -> UART {
+        self.uart
+    }
+}
+
+// Passed through unwrapped so the generated buffer type keeps its `embedded-io`
+// impls, which need the error to implement `embedded_io::Error`.
+impl<UART: embedded_io::ErrorType> device_driver::BufferInterfaceError for UartInterface<UART> {
+    type Error = UART::Error;
+}
+{% if wants_sync %}
+impl<UART: embedded_io::Read + embedded_io::Write> device_driver::BufferInterface
+    for UartInterface<UART>
+{
+    type AddressType = u8;
+
+    fn write(&mut self, _address: u8, buf: &[u8]) -> Result<usize, Self::Error> {
+        self.uart.write(buf)
+    }
+
+    fn flush(&mut self, _address: u8) -> Result<(), Self::Error> {
+        self.uart.flush()
+    }
+
+    fn read(&mut self, _address: u8, buf: &mut [u8]) -> Result<usize, Self::Error> {
+        self.uart.read(buf)
+    }
+}
+{% endif %}{% if wants_async %}
+impl<UART: embedded_io_async::Read + embedded_io_async::Write> device_driver::AsyncBufferInterface
+    for UartInterface<UART>
+{
+    type AddressType = u8;
+
+    async fn write(&mut self, _address: u8, buf: &[u8]) -> Result<usize, Self::Error> {
+        self.uart.write(buf).await
+    }
+
+    async fn flush(&mut self, _address: u8) -> Result<(), Self::Error> {
+        self.uart.flush().await
+    }
+
+    async fn read(&mut self, _address: u8, buf: &mut [u8]) -> Result<usize, Self::Error> {
+        self.uart.read(buf).await
     }
 }
 {% endif %}{% endif %}

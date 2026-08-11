@@ -43,7 +43,14 @@ impl<SPI> {{ device }}<crate::interface::SpiInterface<SPI>> {
         Self::new(crate::interface::SpiInterface::new(spi))
     }
 }
-{% endif %}{% if wants_sync %}
+{% endif %}{% if interfaces contains "uart" %}
+impl<UART> {{ device }}<crate::interface::UartInterface<UART>> {
+    /// Build the driver on a UART byte stream.
+    pub fn new_uart(uart: UART) -> Self {
+        Self::new(crate::interface::UartInterface::new(uart))
+    }
+}
+{% endif %}{% if interfaces contains "i2c" or interfaces contains "spi" %}{% if wants_sync %}
 impl<I: device_driver::RegisterInterface<AddressType = u8>> {{ device }}<I> {
     /// Read the fixed device identifier.
     pub fn device_id(&mut self) -> Result<u8, I::Error> {
@@ -74,4 +81,32 @@ impl<I: device_driver::AsyncRegisterInterface<AddressType = u8>> {{ device }}<I>
             .await
     }
 }
-{% endif %}
+{% endif %}{% endif %}{% if interfaces contains "uart" %}{% if wants_sync %}
+impl<I: device_driver::BufferInterface<AddressType = u8>> {{ device }}<I> {
+    /// Read whatever the device has streamed out, returning the byte count.
+    pub fn read_stream(&mut self, buf: &mut [u8]) -> Result<usize, I::Error> {
+        self.regs.stream().read(buf)
+    }
+
+    /// Send bytes to the device and wait for them to leave the transmitter.
+    pub fn write_stream(&mut self, buf: &[u8]) -> Result<(), I::Error> {
+        let mut stream = self.regs.stream();
+        stream.write_all(buf)?;
+        stream.flush()
+    }
+}
+{% endif %}{% if wants_async %}
+impl<I: device_driver::AsyncBufferInterface<AddressType = u8>> {{ device }}<I> {
+    /// Read whatever the device has streamed out, returning the byte count.
+    pub async fn read_stream_async(&mut self, buf: &mut [u8]) -> Result<usize, I::Error> {
+        self.regs.stream().read_async(buf).await
+    }
+
+    /// Send bytes to the device and wait for them to leave the transmitter.
+    pub async fn write_stream_async(&mut self, buf: &[u8]) -> Result<(), I::Error> {
+        let mut stream = self.regs.stream();
+        stream.write_all_async(buf).await?;
+        stream.flush_async().await
+    }
+}
+{% endif %}{% endif %}

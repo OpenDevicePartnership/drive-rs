@@ -15,16 +15,16 @@ post = ["generate.rhai"]
 # and placeholders defined inside a conditional cannot gate another conditional.
 # ---------------------------------------------------------------------------
 [placeholders]
-interfaces = { type = "array", prompt = "Which bus/interface(s) does the device use?", choices = ["gpio", "i2c", "spi"], default = ["i2c"] }
+interfaces = { type = "array", prompt = "Which bus/interface(s) does the device use?", choices = ["gpio", "i2c", "spi", "uart"], default = ["i2c"] }
 mode = { type = "string", prompt = "Generate blocking, async, or both APIs?", choices = ["sync", "async", "both"], default = "sync" }
 
 # ---------------------------------------------------------------------------
 # Conditional file pruning.
 # device-driver is register-based, so the register transport files only make
-# sense when an I2C or SPI bus is selected. A GPIO-only driver drops them (and
-# the post-hook skips code generation, so no src/registers.rs is produced).
+# sense when an I2C, SPI, or UART bus is selected. A GPIO-only driver drops them
+# (and the post-hook skips code generation, so no src/registers.rs is produced).
 # ---------------------------------------------------------------------------
-[conditional.'!interfaces.contains("i2c") && !interfaces.contains("spi")']
+[conditional.'!interfaces.contains("i2c") && !interfaces.contains("spi") && !interfaces.contains("uart")']
 ignore = ["device.yaml", "src/interface.rs", "src/driver.rs"]
 
 # The discrete-pin module only exists when GPIO is selected.
