@@ -1,6 +1,6 @@
 {%- assign device = project-name | pascal_case -%}
 {%- assign has_bus = false -%}
-{%- if interfaces contains "i2c" or interfaces contains "spi" -%}{%- assign has_bus = true -%}{%- endif -%}
+{%- if interfaces contains "i2c" or interfaces contains "spi" or interfaces contains "uart" -%}{%- assign has_bus = true -%}{%- endif -%}
 {%- assign example_async = false -%}
 {%- if mode == "async" -%}{%- assign example_async = true -%}{%- endif -%}
 //! Run the {{ device }} driver on your laptop against real hardware via a
@@ -29,6 +29,13 @@ async fn main() {
         Ok(id) => println!("{{ device }} id: {id:#04x}"),
         Err(e) => eprintln!("error talking to the device: {e}"),
     }
+{% elsif interfaces contains "uart" %}    // Baud rate is fixed at the bridge firmware's default.
+    let mut dev = {{ device }}::new_uart(hal.uart());
+    let mut buf = [0u8; 32];
+    match dev.read_stream_async(&mut buf).await {
+        Ok(n) => println!("{{ device }} sent {n} bytes: {:02x?}", &buf[..n]),
+        Err(e) => eprintln!("error talking to the device: {e:?}"),
+    }
 {% else %}    // Output on GPIO 0, input on GPIO 1 — change to match your wiring.
     let mut dev = {{ device }}::new(hal.gpio(0), hal.gpio(1));
     dev.wait_for_input_high().await.expect("wait failed");
@@ -49,6 +56,13 @@ fn main() {
     match dev.device_id() {
         Ok(id) => println!("{{ device }} id: {id:#04x}"),
         Err(e) => eprintln!("error talking to the device: {e}"),
+    }
+{% elsif interfaces contains "uart" %}    // Baud rate is fixed at the bridge firmware's default.
+    let mut dev = {{ device }}::new_uart(hal.uart());
+    let mut buf = [0u8; 32];
+    match dev.read_stream(&mut buf) {
+        Ok(n) => println!("{{ device }} sent {n} bytes: {:02x?}", &buf[..n]),
+        Err(e) => eprintln!("error talking to the device: {e:?}"),
     }
 {% else %}    // Output on GPIO 0, input on GPIO 1 — change to match your wiring.
     let mut dev = {{ device }}::new(hal.gpio(0), hal.gpio(1));

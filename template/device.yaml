@@ -1,3 +1,5 @@
+{%- assign has_registers = false -%}
+{%- if interfaces contains "i2c" or interfaces contains "spi" -%}{%- assign has_registers = true -%}{%- endif -%}
 # device-driver manifest for the {{ project-name | pascal_case }}.
 #
 # This is the single source of truth for the register map. Edit it to match
@@ -8,12 +10,13 @@
 # (`cargo install device-driver-cli` if you don't have it.)
 
 config:
-  register_address_type: u8
-  default_byte_order: LE
+{% if has_registers %}  register_address_type: u8
+{% endif %}{% if interfaces contains "uart" %}  buffer_address_type: u8
+{% endif %}  default_byte_order: LE
   # defmt impls on the generated types are gated behind the crate's `defmt`
   # feature (see Cargo.toml).
   defmt_feature: defmt
-
+{% if has_registers %}
 DeviceId:
   type: register
   access: RO
@@ -44,3 +47,12 @@ Config:
       start: 1
       end: 3
       description: Operating mode (0..=3).
+{% endif %}{% if interfaces contains "uart" %}
+Stream:
+  type: buffer
+  access: RW
+  address: 0
+  description: >-
+    Raw byte stream to and from the device. Whatever framing the device speaks
+    over the wire is decoded in `src/driver.rs`, not here.
+{% endif %}

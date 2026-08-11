@@ -1,6 +1,6 @@
 {%- assign device = project-name | pascal_case -%}
 {%- assign has_bus = false -%}
-{%- if interfaces contains "i2c" or interfaces contains "spi" -%}{%- assign has_bus = true -%}{%- endif -%}
+{%- if interfaces contains "i2c" or interfaces contains "spi" or interfaces contains "uart" -%}{%- assign has_bus = true -%}{%- endif -%}
 # {{ project-name }}
 
 An [`embedded-hal`](https://docs.rs/embedded-hal) driver for the **{{ device }}**,
@@ -47,6 +47,11 @@ let mut dev = {{ device }}::new_i2c(i2c, 0x00);
 // Construct on an SPI device (chip-select managed for you):
 let mut dev = {{ device }}::new_spi(spi);
 {% if mode == "async" %}let id = dev.device_id_async().await?;{% else %}let id = dev.device_id()?;{% endif %}
+{% elsif interfaces contains "uart" %}
+// Construct on a UART byte stream:
+let mut dev = {{ device }}::new_uart(uart);
+let mut buf = [0u8; 32];
+{% if mode == "async" %}let n = dev.read_stream_async(&mut buf).await?;{% else %}let n = dev.read_stream(&mut buf)?;{% endif %}
 {% else %}
 // Construct from an output pin and an input pin:
 let mut dev = {{ device }}::new(output_pin, input_pin);

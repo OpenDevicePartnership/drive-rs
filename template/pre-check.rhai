@@ -7,5 +7,5 @@
 let interfaces = variable::get("interfaces");
 
 if interfaces.is_empty() {
-    abort("Select at least one interface (gpio, i2c, and/or spi).");
+    abort("Select at least one interface (gpio, i2c, spi, and/or uart).");
 }

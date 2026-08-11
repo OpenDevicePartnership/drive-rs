@@ -1,5 +1,9 @@
 {%- assign has_bus = false -%}
-{%- if interfaces contains "i2c" or interfaces contains "spi" -%}{%- assign has_bus = true -%}{%- endif -%}
+{%- if interfaces contains "i2c" or interfaces contains "spi" or interfaces contains "uart" -%}{%- assign has_bus = true -%}{%- endif -%}
+{%- assign has_uart = false -%}
+{%- if interfaces contains "uart" -%}{%- assign has_uart = true -%}{%- endif -%}
+{%- assign has_hal = false -%}
+{%- if interfaces contains "gpio" or interfaces contains "i2c" or interfaces contains "spi" -%}{%- assign has_hal = true -%}{%- endif -%}
 {%- assign wants_async = false -%}
 {%- if mode == "async" or mode == "both" -%}{%- assign wants_async = true -%}{%- endif -%}
 [package]
@@ -13,8 +17,10 @@ categories = ["embedded", "no-std", "hardware-support"]
 keywords = ["embedded-hal", "driver", "device-driver"]
 
 [dependencies]
-embedded-hal = "1.0"
-{% if wants_async %}embedded-hal-async = "1.0"
+{% if has_hal %}embedded-hal = "1.0"
+{% endif %}{% if has_hal and wants_async %}embedded-hal-async = "1.0"
+{% endif %}{% if has_uart %}embedded-io = "0.6"
+{% endif %}{% if has_uart and wants_async %}embedded-io-async = "0.6"
 {% endif %}{% if has_bus %}# The register map in `src/registers.rs` is generated ahead of time from
 # `device.yaml` by `device-driver-cli`, so only the runtime is needed here (no
 # proc-macro, no manifest parsers). Regenerate with:

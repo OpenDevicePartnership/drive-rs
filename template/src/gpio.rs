@@ -1,6 +1,6 @@
 {%- assign device = project-name | pascal_case -%}
 {%- assign has_bus = false -%}
-{%- if interfaces contains "i2c" or interfaces contains "spi" -%}{%- assign has_bus = true -%}{%- endif -%}
+{%- if interfaces contains "i2c" or interfaces contains "spi" or interfaces contains "uart" -%}{%- assign has_bus = true -%}{%- endif -%}
 {%- if has_bus -%}{%- assign pin_type = device | append: "Pins" -%}{%- else -%}{%- assign pin_type = device -%}{%- endif -%}
 {%- assign wants_sync = false -%}
 {%- if mode == "sync" or mode == "both" -%}{%- assign wants_sync = true -%}{%- endif -%}

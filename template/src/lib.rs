@@ -1,6 +1,8 @@
 {%- assign device = project-name | pascal_case -%}
 {%- assign has_bus = false -%}
-{%- if interfaces contains "i2c" or interfaces contains "spi" -%}{%- assign has_bus = true -%}{%- endif -%}
+{%- if interfaces contains "i2c" or interfaces contains "spi" or interfaces contains "uart" -%}{%- assign has_bus = true -%}{%- endif -%}
+{%- assign has_registers = false -%}
+{%- if interfaces contains "i2c" or interfaces contains "spi" -%}{%- assign has_registers = true -%}{%- endif -%}
 #![no_std]
 #![doc = concat!("`", env!("CARGO_PKG_NAME"), "` — an embedded-hal driver.")]
 //!
@@ -16,12 +18,15 @@ mod interface;
 // Generated ahead of time from `device.yaml` by `device-driver-cli`. As
 // hand-untouched generated code it is exempt from our lints.
 #[allow(clippy::all, clippy::pedantic, clippy::nursery)]
-#[rustfmt::skip]
+{% unless has_registers %}// A register-less manifest generates an empty field-set enum.
+#[allow(unused_variables)]
+{% endunless %}#[rustfmt::skip]
 mod registers;
 
 pub use driver::{{ device }};
 {% if interfaces contains "i2c" %}pub use interface::I2cInterface;
 {% endif %}{% if interfaces contains "spi" %}pub use interface::SpiInterface;
+{% endif %}{% if interfaces contains "uart" %}pub use interface::UartInterface;
 {% endif %}// The low-level, generated register map is exposed for advanced use.
 pub use registers::{{ device }}Registers;
 {% endif %}{% if interfaces contains "gpio" %}
