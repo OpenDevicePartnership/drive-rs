@@ -10,7 +10,7 @@ pub use error::Error;
 
 mod driver;
 mod interface;
-// Generated ahead of time from `device.yaml` by `device-driver-cli`. As
+// Generated ahead of time from `device.ddsl` by `ddc`. As
 // hand-untouched generated code it is exempt from our lints.
 #[allow(clippy::all, clippy::pedantic, clippy::nursery)]
 #[rustfmt::skip]
@@ -20,4 +20,3 @@ pub use driver::AcmeSensor;
 pub use interface::I2cInterface;
 // The low-level, generated register map is exposed for advanced use.
 pub use registers::AcmeSensorRegisters;
-

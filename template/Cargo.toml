@@ -10,7 +10,7 @@
 name = "{{ project-name }}"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.90"
+rust-version = "1.94"
 description = "An embedded-hal driver for the {{ project-name | pascal_case }}."
 license = "MIT OR Apache-2.0"
 categories = ["embedded", "no-std", "hardware-support"]
@@ -19,21 +19,22 @@ keywords = ["embedded-hal", "driver", "device-driver"]
 [dependencies]
 {% if has_hal %}embedded-hal = "1.0"
 {% endif %}{% if has_hal and wants_async %}embedded-hal-async = "1.0"
-{% endif %}{% if has_uart %}embedded-io = "0.6"
-{% endif %}{% if has_uart and wants_async %}embedded-io-async = "0.6"
+{% endif %}{% if has_uart %}embedded-io = "0.7"
+{% endif %}{% if has_uart and wants_async %}embedded-io-async = "0.7"
 {% endif %}{% if has_bus %}# The register map in `src/registers.rs` is generated ahead of time from
-# `device.yaml` by `device-driver-cli`, so only the runtime is needed here (no
+# `device.ddsl` by `ddc`, so only the runtime is needed here (no
 # proc-macro, no manifest parsers). Regenerate with:
-#   device-driver-cli -m device.yaml -o src/registers.rs -d {{ project-name | pascal_case }}Registers
-device-driver = { version = "1.0.9", default-features = false }
-{% endif %}defmt = { version = "0.3", optional = true }
+#   ddc build rust -s device.ddsl -o src/registers.rs --rust-defmt-feature=defmt
+device-driver = { version = "2.1.0", default-features = false{% if has_uart %}, features = ["embedded-io-07"]{% endif %} }
+{% endif %}defmt = { version = "1", optional = true }
 
 [dev-dependencies]
 # Run your driver against real hardware on your laptop over a Pico de Gallo
 # USB bridge. See `examples/pico.rs`.
-pico-de-gallo-hal = "0.6"
-{% if wants_async %}tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread"] }
+{% if has_uart %}pico-de-gallo-hal = { version = "0.7", default-features = false, features = ["embedded-io-07"] }
+{% else %}pico-de-gallo-hal = { version = "0.7", default-features = false }
+{% endif %}{% if wants_async %}tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread"] }
 {% endif %}
 [features]
 default = []
-{% if has_bus %}defmt = ["dep:defmt", "device-driver/defmt-03"]{% else %}defmt = ["dep:defmt"]{% endif %}
+{% if has_bus %}defmt = ["dep:defmt", "device-driver/defmt"]{% else %}defmt = ["dep:defmt"]{% endif %}

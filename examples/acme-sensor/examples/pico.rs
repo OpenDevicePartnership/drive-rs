@@ -5,8 +5,8 @@
 //! cargo run --example pico
 //! ```
 
-use pico_de_gallo_hal::Hal;
 use acme_sensor::AcmeSensor;
+use pico_de_gallo_hal::Hal;
 
 fn main() {
     let hal = Hal::new();

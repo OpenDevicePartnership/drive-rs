@@ -16,8 +16,8 @@ driver template.
 
 ## Layout
 
-{% if has_bus %}- `device.yaml` — the `device-driver` manifest: the single source of truth for the register map.
-- `src/registers.rs` — the register map generated from `device.yaml` (committed; do not edit by hand).
+{% if has_bus %}- `device.ddsl` — the `device-driver` manifest: the single source of truth for the register map.
+- `src/registers.rs` — the register map generated from `device.ddsl` (committed; do not edit by hand).
 - `src/interface.rs` — bridges an `embedded-hal` bus to the register map.
 - `src/driver.rs` — the high-level [`{{ device }}`] driver with named methods.
 {% endif %}{% if interfaces contains "gpio" %}- `src/gpio.rs` — discrete GPIO line handling.
@@ -27,11 +27,11 @@ driver template.
 {% if has_bus %}
 ## Regenerating the register map
 
-Edit `device.yaml`, then regenerate the committed Rust module:
+Edit `device.ddsl`, then regenerate the committed Rust module:
 
 ```sh
 cargo install device-driver-cli   # once
-device-driver-cli -m device.yaml -o src/registers.rs -d {{ device }}Registers
+ddc build rust -s device.ddsl -o src/registers.rs --rust-defmt-feature=defmt
 ```
 {% endif %}
 
