@@ -1,0 +1,39 @@
+// device-driver DDSL manifest for the AcmeSensor.
+//
+// This is the single source of truth for the register map. Edit it to match
+// your device's datasheet, then regenerate `src/registers.rs` with:
+//
+//     ddc build rust -s device.ddsl -o src/registers.rs --rust-defmt-feature=defmt
+//
+// (`cargo install device-driver-cli` if you don't have `ddc`.)
+
+device AcmeSensorRegisters {
+    default-byte-order: LE,
+    register-address-type: u8,
+    default-access: RW,
+
+    /// Read-only device identification register.
+    register DeviceId {
+        address: 0,
+        access: RO,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            /// Fixed identifier reported by the device.
+            field id 7:0,
+        },
+    },
+    /// Primary configuration register.
+    register Config {
+        address: 1,
+        reset: 0,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            /// Enable the device.
+            field enable 0,
+            /// Operating mode (0..=3).
+            field mode 2:1,
+        },
+    },
+}

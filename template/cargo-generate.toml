@@ -4,7 +4,7 @@ description = "An embedded-hal device driver built on top of the device-driver t
 
 [hooks]
 pre = ["pre-check.rhai"]
-# Runs `device-driver-cli` to compile `device.yaml` into `src/registers.rs`.
+# Runs `ddc` to compile `device.ddsl` into `src/registers.rs`.
 # Because this hook shells out, generating from this template requires either an
 # interactive confirmation or the `--allow-commands` flag.
 post = ["generate.rhai"]
@@ -25,7 +25,7 @@ mode = { type = "string", prompt = "Generate blocking, async, or both APIs?", ch
 # (and the post-hook skips code generation, so no src/registers.rs is produced).
 # ---------------------------------------------------------------------------
 [conditional.'!interfaces.contains("i2c") && !interfaces.contains("spi") && !interfaces.contains("uart")']
-ignore = ["device.yaml", "src/interface.rs", "src/driver.rs"]
+ignore = ["device.ddsl", "src/interface.rs", "src/driver.rs"]
 
 # The discrete-pin module only exists when GPIO is selected.
 [conditional.'!interfaces.contains("gpio")']

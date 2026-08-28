@@ -2,7 +2,7 @@
 name = "acme-sensor"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.90"
+rust-version = "1.94"
 description = "An embedded-hal driver for the AcmeSensor."
 license = "MIT OR Apache-2.0"
 categories = ["embedded", "no-std", "hardware-support"]
@@ -12,18 +12,18 @@ keywords = ["embedded-hal", "driver", "device-driver"]
 embedded-hal = "1.0"
 embedded-hal-async = "1.0"
 # The register map in `src/registers.rs` is generated ahead of time from
-# `device.yaml` by `device-driver-cli`, so only the runtime is needed here (no
+# `device.ddsl` by `ddc`, so only the runtime is needed here (no
 # proc-macro, no manifest parsers). Regenerate with:
-#   device-driver-cli -m device.yaml -o src/registers.rs -d AcmeSensorRegisters
-device-driver = { version = "1.0.9", default-features = false }
-defmt = { version = "0.3", optional = true }
+#   ddc build rust -s device.ddsl -o src/registers.rs --rust-defmt-feature=defmt
+device-driver = { version = "2.1.0", default-features = false }
+defmt = { version = "1", optional = true }
 
 [dev-dependencies]
 # Run your driver against real hardware on your laptop over a Pico de Gallo
 # USB bridge. See `examples/pico.rs`.
-pico-de-gallo-hal = "0.6"
+pico-de-gallo-hal = { version = "0.7", default-features = false }
 tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread"] }
 
 [features]
 default = []
-defmt = ["dep:defmt", "device-driver/defmt-03"]
+defmt = ["dep:defmt", "device-driver/defmt"]

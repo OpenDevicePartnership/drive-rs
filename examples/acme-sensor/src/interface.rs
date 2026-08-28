@@ -27,18 +27,18 @@ impl<I2C> I2cInterface<I2C> {
     }
 }
 
-impl<I2C: embedded_hal::i2c::I2c> device_driver::RegisterInterface for I2cInterface<I2C> {
+impl<I2C: embedded_hal::i2c::ErrorType> device_driver::RegisterInterfaceBase for I2cInterface<I2C> {
     type Error = Error<I2C::Error>;
     type AddressType = u8;
+}
 
+impl<I2C: embedded_hal::i2c::I2c> device_driver::RegisterInterface for I2cInterface<I2C> {
     fn write_register(
         &mut self,
         address: u8,
-        size_bits: u32,
-        data: &[u8],
+        data: &mut [u8],
+        _metadata: &device_driver::FieldsetMetadata,
     ) -> Result<(), Self::Error> {
-        // The runtime pre-sizes `data`; `size_bits` is only a sanity check.
-        debug_assert_eq!(data.len(), size_bits.div_ceil(8) as usize);
         self.i2c
             .transaction(
                 self.address,
@@ -53,10 +53,9 @@ impl<I2C: embedded_hal::i2c::I2c> device_driver::RegisterInterface for I2cInterf
     fn read_register(
         &mut self,
         address: u8,
-        size_bits: u32,
         data: &mut [u8],
+        _metadata: &device_driver::FieldsetMetadata,
     ) -> Result<(), Self::Error> {
-        debug_assert_eq!(data.len(), size_bits.div_ceil(8) as usize);
         // `write_read` is a single repeated-start transaction (no STOP between
         // the register pointer write and the data read).
         self.i2c
@@ -65,17 +64,15 @@ impl<I2C: embedded_hal::i2c::I2c> device_driver::RegisterInterface for I2cInterf
     }
 }
 
-impl<I2C: embedded_hal_async::i2c::I2c> device_driver::AsyncRegisterInterface for I2cInterface<I2C> {
-    type Error = Error<I2C::Error>;
-    type AddressType = u8;
-
+impl<I2C: embedded_hal_async::i2c::I2c> device_driver::AsyncRegisterInterface
+    for I2cInterface<I2C>
+{
     async fn write_register(
         &mut self,
         address: u8,
-        size_bits: u32,
-        data: &[u8],
+        data: &mut [u8],
+        _metadata: &device_driver::FieldsetMetadata,
     ) -> Result<(), Self::Error> {
-        debug_assert_eq!(data.len(), size_bits.div_ceil(8) as usize);
         self.i2c
             .transaction(
                 self.address,
@@ -91,10 +88,9 @@ impl<I2C: embedded_hal_async::i2c::I2c> device_driver::AsyncRegisterInterface fo
     async fn read_register(
         &mut self,
         address: u8,
-        size_bits: u32,
         data: &mut [u8],
+        _metadata: &device_driver::FieldsetMetadata,
     ) -> Result<(), Self::Error> {
-        debug_assert_eq!(data.len(), size_bits.div_ceil(8) as usize);
         self.i2c
             .write_read(self.address, &[address], data)
             .await

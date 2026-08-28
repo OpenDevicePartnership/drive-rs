@@ -26,18 +26,28 @@ impl MockInterface {
         Self { regs }
     }
 }
-{% if wants_sync %}
-impl device_driver::RegisterInterface for MockInterface {
+impl device_driver::RegisterInterfaceBase for MockInterface {
     type Error = core::convert::Infallible;
     type AddressType = u8;
-
-    fn write_register(&mut self, address: u8, _bits: u32, data: &[u8]) -> Result<(), Self::Error> {
+}
+{% if wants_sync %}impl device_driver::RegisterInterface for MockInterface {
+    fn write_register(
+        &mut self,
+        address: u8,
+        data: &mut [u8],
+        _metadata: &device_driver::FieldsetMetadata,
+    ) -> Result<(), Self::Error> {
         let start = address as usize;
         self.regs[start..start + data.len()].copy_from_slice(data);
         Ok(())
     }
 
-    fn read_register(&mut self, address: u8, _bits: u32, data: &mut [u8]) -> Result<(), Self::Error> {
+    fn read_register(
+        &mut self,
+        address: u8,
+        data: &mut [u8],
+        _metadata: &device_driver::FieldsetMetadata,
+    ) -> Result<(), Self::Error> {
         let start = address as usize;
         data.copy_from_slice(&self.regs[start..start + data.len()]);
         Ok(())
@@ -45,17 +55,27 @@ impl device_driver::RegisterInterface for MockInterface {
 }
 {% endif %}{% if wants_async %}
 impl device_driver::AsyncRegisterInterface for MockInterface {
-    type Error = core::convert::Infallible;
-    type AddressType = u8;
-
-    async fn write_register(&mut self, address: u8, _bits: u32, data: &[u8]) -> Result<(), Self::Error> {
+    async fn write_register(
+        &mut self,
+        address: u8,
+        data: &mut [u8],
+        _metadata: &device_driver::FieldsetMetadata,
+    ) -> Result<(), Self::Error> {
         let start = address as usize;
-        assert!(start + data.len() <= self.regs.len(), "register write out of bounds");
+        assert!(
+            start + data.len() <= self.regs.len(),
+            "register write out of bounds"
+        );
         self.regs[start..start + data.len()].copy_from_slice(data);
         Ok(())
     }
 
-    async fn read_register(&mut self, address: u8, _bits: u32, data: &mut [u8]) -> Result<(), Self::Error> {
+    async fn read_register(
+        &mut self,
+        address: u8,
+        data: &mut [u8],
+        _metadata: &device_driver::FieldsetMetadata,
+    ) -> Result<(), Self::Error> {
         let start = address as usize;
         data.copy_from_slice(&self.regs[start..start + data.len()]);
         Ok(())
@@ -98,13 +118,12 @@ impl MockStream {
     }
 }
 
-impl device_driver::BufferInterfaceError for MockStream {
+impl device_driver::BufferInterfaceBase for MockStream {
     type Error = core::convert::Infallible;
+    type AddressType = u8;
 }
 {% if wants_sync %}
 impl device_driver::BufferInterface for MockStream {
-    type AddressType = u8;
-
     fn write(&mut self, _address: u8, buf: &[u8]) -> Result<usize, Self::Error> {
         let n = buf.len().min(self.written.len() - self.write_pos);
         self.written[self.write_pos..self.write_pos + n].copy_from_slice(&buf[..n]);
@@ -125,8 +144,6 @@ impl device_driver::BufferInterface for MockStream {
 }
 {% endif %}{% if wants_async %}
 impl device_driver::AsyncBufferInterface for MockStream {
-    type AddressType = u8;
-
     async fn write(&mut self, _address: u8, buf: &[u8]) -> Result<usize, Self::Error> {
         let n = buf.len().min(self.written.len() - self.write_pos);
         self.written[self.write_pos..self.write_pos + n].copy_from_slice(&buf[..n]);

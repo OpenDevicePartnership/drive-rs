@@ -13,8 +13,8 @@ driver template.
 
 ## Layout
 
-- `device.yaml` — the `device-driver` manifest: the single source of truth for the register map.
-- `src/registers.rs` — the register map generated from `device.yaml` (committed; do not edit by hand).
+- `device.ddsl` — the `device-driver` manifest: the single source of truth for the register map.
+- `src/registers.rs` — the register map generated from `device.ddsl` (committed; do not edit by hand).
 - `src/interface.rs` — bridges an `embedded-hal` bus to the register map.
 - `src/driver.rs` — the high-level [`AcmeSensor`] driver with named methods.
 - `src/error.rs` — the [`Error`] type.
@@ -23,11 +23,11 @@ driver template.
 
 ## Regenerating the register map
 
-Edit `device.yaml`, then regenerate the committed Rust module:
+Edit `device.ddsl`, then regenerate the committed Rust module:
 
 ```sh
 cargo install device-driver-cli   # once
-device-driver-cli -m device.yaml -o src/registers.rs -d AcmeSensorRegisters
+ddc build rust -s device.ddsl -o src/registers.rs --rust-defmt-feature=defmt
 ```
 
 
